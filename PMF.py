@@ -11,7 +11,6 @@ class PMF:
     K = 0.015         # regularization parameter
     min_iter = 100    # minimum number of iterations
     min_imp = 1e-4    # improvement threshold
-    lambda_ = 0.02    # regularization component
 
 
     def __init__(self, file_path, rank=40, init=0.1):
