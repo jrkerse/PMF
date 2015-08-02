@@ -90,18 +90,18 @@ class PMF:
         return None
 
 
-    def update(self, u, i, err):
+    def update(self, u, i, f,  err):
         self.b_u[u] = self.b_u[u] + self.gamma * (err - self.lambda_ * self.b_u[u])
         self.b_i[i] = self.b_i[i] + self.gamma * (err - self.lambda_ * self.b_i[i])
-        self.q[:,i] = self.q[:,i] + self.gamma  * (err * self.p[:,u] - self.lambda_ * self.q[:,i])
-        self.p[:,u] = self.p[:,u] + self.gamma * (err * self.q[:,i] - self.lambda_ * self.p[:,u])
+        self.q[f,i] = self.q[f,i] + self.gamma * (err * self.p[f,u] - self.lambda_ * self.q[f,i])
+        self.p[f,u] = self.p[f,u] + self.gamma * (err * self.q[f,i] - self.lambda_ * self.p[f,u])
         return None
     
 
     def get_error(self, u, i):
         r = self.get_rating(u, i)
-        r_hat = self.predict_rhat(u, i)
-        err = (r - r_hat)**2 + self.lambda_ * \
+        r_hat_desc = self.mu - self.b_i[i] - self.b_u[u] - np.dot(self.q.T[i,:], self.p[:,u])
+        err = (r - r_hat_desc)**2 + self.lambda_ * \
               (self.b_i[i]**2 + self.b_u[u]**2 + np.linalg.norm(self.q[:,i])**2 + \
                                            np.linalg.norm(self.p[:,u])**2)
         return err
@@ -123,14 +123,14 @@ class PMF:
                     try:
                         err = self.get_error(u, i)
                         sq_err = err**2
-                        self.update(u, i, err)
+                        self.update(u, i, feature, err)
                     except:
                         print('u:', u, 'i:', i)
                         print err
                         print rmse_last
                         err = self.get_error(u, i)
                         sq_err = err**2
-                        self.update(u, i, err)
+                        self.update(u, i, feature, err)
                         
                 rmse = np.sqrt(sq_err / n_ratings)
 
