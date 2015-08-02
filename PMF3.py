@@ -98,17 +98,24 @@ class PMF:
         return None
     
 
-    def get_error(self, u, i):
+    def compute_cost(self, u, i):
         r = self.get_rating(u, i)
         r_hat_desc = self.mu - self.b_i[i] - self.b_u[u] - np.dot(self.q.T[i,:], self.p[:,u])
-        err = (r - r_hat_desc)**2 + self.lambda_ * \
-              (self.b_i[i]**2 + self.b_u[u]**2 + np.linalg.norm(self.q[:,i])**2 + \
+        cost = (r - r_hat_desc)**2 + self.lambda_ * \
+               (self.b_i[i]**2 + self.b_u[u]**2 + np.linalg.norm(self.q[:,i])**2 + \
                                            np.linalg.norm(self.p[:,u])**2)
+        return cost
+
+
+    def get_error(self, u, i):
+        r = self.get_rating(u, i)
+        r_hat = self.predict_rhat(u, i)
+        err = r - r_hat
         return err
 
 
     def train(self):
-        rmse = 2.0
+        cost = 2.0
         n_ratings = len(self.K_items)
 
         for feature in xrange(self.f):
@@ -117,7 +124,7 @@ class PMF:
 
             for n in xrange(self.max_iter):
                 sq_err = 0.0
-                rmse_last = rmse
+                cost_last = cost
 
                 for u, i in zip(self.K_users, self.K_items): 
                     try:
@@ -127,14 +134,14 @@ class PMF:
                     except:
                         print('u:', u, 'i:', i)
                         print err
-                        print rmse_last
+                        print cost_last
                         err = self.get_error(u, i)
                         sq_err = err**2
                         self.update(u, i, feature, err)
                         
-                rmse = np.sqrt(sq_err / n_ratings)
+                cost = self.compute_cost(u, i)
 
-                if (n >= self.min_iter and rmse > rmse_last - self.min_improvement):
+                if (n >= self.min_iter and cost > cost_last - self.min_improvement):
                     break
 
 
