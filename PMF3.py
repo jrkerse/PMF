@@ -6,6 +6,7 @@ import numpy as np
 from scipy import sparse
 import sys
 
+np.seterr(all='raise')
 
 class PMF:
     '''
@@ -131,7 +132,7 @@ class PMF:
                         sq_err = err**2
                         self.update(u, i, err)
                         
-                rmse = N.sqrt(sq_err / n_ratings)
+                rmse = np.sqrt(sq_err / n_ratings)
 
                 if (n >= self.min_iter and rmse > rmse_last - self.min_improvement):
                     break
