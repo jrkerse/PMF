@@ -28,8 +28,7 @@ class PMF:
     Goal:
     ------------
     We're going to use previously observed ratings to fit 
-    a rating estimator model. To do so, we'll be using a
-    sparse matrix and stochastic gradient descent.
+    a rating estimator model.
     '''
 
     def __init__(self, file_path, f, gamma=0.005, lambda_=0.02, min_iter = 1, max_iter=10, 
