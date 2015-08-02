@@ -155,6 +155,6 @@ class PMF:
 
 
 
-    if __name__ == '__main__':
-        test = PMF('./data/ml-100k/u1.base')
-        tmp.train()
+if __name__ == '__main__':
+    test = PMF('./data/ml-100k/u1.base')
+    tmp.train()
