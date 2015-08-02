@@ -135,7 +135,6 @@ class PMF:
                     break
 
 
-
     @staticmethod
     def _load_data(file_path):
         '''
@@ -151,7 +150,6 @@ class PMF:
         values = data[:, 2]
         sparse_matrix = sparse.csc_matrix((values, ij.T)).astype(float)
         return sparse_matrix
-
 
 
 if __name__ == '__main__':
