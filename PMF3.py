@@ -64,7 +64,7 @@ class PMF:
 
 
     def get_rating(self, u, i):
-        return self.R_sparse[u,i]
+        return self.R[u,i]
 
 
     def predict_rhat(self, u, i):
