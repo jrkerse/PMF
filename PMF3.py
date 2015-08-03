@@ -43,8 +43,8 @@ class PMF:
         self.K_users, self.K_items = self.R_sparse.nonzero()
 
         # self.n, self.m depend on R_sparse user, item vectors starting at 0
-        self.n = max(self.R_sparse[0])
-        self.m = max(self.R_sparse[1])
+        self.n = max(self.R_sparse.nonzero()[0])
+        self.m = max(self.R_sparse.nonzero()[1])
 
         if hasattr(self, 'p'):
             self.p = p
