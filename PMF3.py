@@ -49,11 +49,11 @@ class PMF:
         if hasattr(self, 'p'):
             self.p = p
         else:
-            self.p = np.ones((f, n)) * np.random.uniform(-0.01, 0.01, size=f*n).reshape(f,n)
+            self.p = np.ones((self.f, self.n)) * np.random.uniform(-0.01, 0.01, size=self.f*self.n).reshape(self.f,self.n)
         if hasattr(self, 'q'):
             self.q = q
         else:
-            self.q = np.ones((f, m)) * np.random.uniform(-0.01, 0.01, size=m*f).reshape(f,m)
+            self.q = np.ones((self.f, self.m)) * np.random.uniform(-0.01, 0.01, size=self.m*self.f).reshape(self.f,self.m)
 
         self.min_iter = min_iter
         self.max_iter = max_iter
