@@ -37,14 +37,14 @@ class PMF:
     def __init__(self, file_path, f, gamma=0.005, lambda_=0.02, min_iter = 1, max_iter=10, 
                  min_improvement=1e-4, **kwargs):
         self.R_sparse = self._load_data(file_path)
-        self.R = self.R_sparse.todense()
         self.f = f
         self.gamma = gamma
         self.lambda_ = lambda_
         self.K_users, self.K_items = self.R_sparse.nonzero()
 
-        n = self.R.shape[0]
-        m = self.R.shape[1]
+        # self.n, self.m depend on R_sparse user, item vectors starting at 0
+        self.n = max(self.R_sparse[0])
+        self.m = max(self.R_sparse[1])
 
         if hasattr(self, 'p'):
             self.p = p
@@ -63,7 +63,7 @@ class PMF:
 
 
     def get_rating(self, u, i):
-        return self.R[u,i]
+        return self.R_sparse[u,i]
 
 
     def predict_rhat(self, u, i):
@@ -85,8 +85,8 @@ class PMF:
         Returns the global average rating, user bias, and item bias.
         '''
         mu = self._get_mu(matrix)
-        user_bias = mu - [self._get_mu(matrix[i,:]) for i in xrange((matrix.shape[0]))]
-        item_bias = mu - [self._get_mu(matrix[:,i]) for i in xrange((matrix.shape[1]))]
+        user_bias = mu - [self._get_mu(matrix[i,:]) for i in xrange(self.n)]
+        item_bias = mu - [self._get_mu(matrix[:,i]) for i in xrange(self.m)]
         return None
 
 
