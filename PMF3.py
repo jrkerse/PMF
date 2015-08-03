@@ -37,6 +37,7 @@ class PMF:
     def __init__(self, file_path, f, gamma=0.005, lambda_=0.02, min_iter = 1, max_iter=10, 
                  min_improvement=1e-4, **kwargs):
         self.R_sparse = self._load_data(file_path)
+        self.R = self.R_sparse.todense()
         self.f = f
         self.gamma = gamma
         self.lambda_ = lambda_
