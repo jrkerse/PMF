@@ -33,7 +33,7 @@ class PMF:
     a rating estimator model.
     '''
 
-    def __init__(self, file_path, f, gamma=0.005, lambda_=0.02, min_iter = 1, max_iter=10, 
+    def __init__(self, file_path, f, gamma=0.005, lambda_=0.02, min_iter = 1, max_iter=1000, 
                  min_improvement=1e-4, **kwargs):
         self.R_sparse = self._load_data(file_path)
         self.R = self.R_sparse.todense()
@@ -67,7 +67,13 @@ class PMF:
 
 
     def predict_rhat(self, u, i):
-        return self.mu + self.b_i[i] + self.b_u[u] + np.dot(self.q.T[i,:], self.p[:,u])
+        r_hat = self.mu + self.b_i[i] + self.b_u[u] + np.dot(self.q.T[i,:], self.p[:,u])
+        if r_hat > 5:
+            return 5
+        elif r_hat < 1:
+            return 1
+        else:
+            return r_hat
 
 
     def _get_mu(self, x):
@@ -108,25 +114,27 @@ class PMF:
     def train(self):
         cost = 2.0
         n_ratings = len(self.K_items)
+        self.sse = 0
 
         for feature in xrange(self.f):
             print('--- Calculating Feature: {feat} ---'.format(feat=feature + 1))
 
 
             for n in xrange(self.max_iter):
-                sq_err = 0.0
                 cost_last = cost
 
                 for u, i in zip(self.K_users, self.K_items): 
                     err = self.get_error(u, i)
-                    sq_err = err**2
                     self.update(u, i, feature, err)
+                    self.sse += err**2
 
                         
                 cost = self.compute_cost(u, i)
 
                 if (n >= self.min_iter and cost > cost_last - self.min_improvement):
                     break
+
+        self.rmse = np.sqrt(self.sse / n_ratings)
 
 
     @staticmethod
