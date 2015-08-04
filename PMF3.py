@@ -27,7 +27,6 @@ class PMF:
         * max_iter is the max number of iterations for descent
         * min_improvement is the minimum improvement needed to continue
             training the current feature
-
     Goal:
     ------------
     We're going to use previously observed ratings to fit 
@@ -44,8 +43,8 @@ class PMF:
         self.K_users, self.K_items = self.R_sparse.nonzero()
 
         # self.n, self.m depend on R_sparse user, item vectors starting at 0
-        self.n = self.R.shape[0]
-        self.m = self.R.shape[1]
+        self.n = max(self.R_sparse.nonzero()[0]) + 1
+        self.m = max(self.R_sparse.nonzero()[1]) + 1
 
         if hasattr(self, 'p'):
             self.p = p
@@ -72,22 +71,13 @@ class PMF:
 
 
     def _get_mu(self, x):
-        return np.nansum(x) / np.count_nonzero(~np.isnan(x))
+        return np.nansum(x) / np.count_nonzero(~np.isnan(x)) or self._get_mu(self.R)
 
 
     def get_baseline(self):
         self.mu = self._get_mu(self.R)
-        self.b_u = self.mu - [self._get_mu(self.R[u,:]) for u in xrange((self.R.shape[0]))]
-        self.b_i = self.mu - [self._get_mu(self.R[:,i]) for i in xrange((self.R.shape[1]))]
-        return None
-
-    def baseline(self, matrix):
-        '''
-        Returns the global average rating, user bias, and item bias.
-        '''
-        mu = self._get_mu(matrix)
-        user_bias = mu - [self._get_mu(matrix[i,:]) for i in xrange(self.n)]
-        item_bias = mu - [self._get_mu(matrix[:,i]) for i in xrange(self.m)]
+        self.b_u = self.mu - [self._get_mu(self.R[u,:]) for u in xrange(self.n)]
+        self.b_i = self.mu - [self._get_mu(self.R[:,i]) for i in xrange(self.m)]
         return None
 
 
@@ -120,7 +110,7 @@ class PMF:
         n_ratings = len(self.K_items)
 
         for feature in xrange(self.f):
-            print('--- Calculating Feature: {feat} ---'.format(feat=feature))
+            print('--- Calculating Feature: {feat} ---'.format(feat=feature + 1))
 
 
             for n in xrange(self.max_iter):
@@ -128,17 +118,10 @@ class PMF:
                 cost_last = cost
 
                 for u, i in zip(self.K_users, self.K_items): 
-                    try:
-                        err = self.get_error(u, i)
-                        sq_err = err**2
-                        self.update(u, i, feature, err)
-                    except:
-                        print('u:', u, 'i:', i)
-                        print err
-                        print cost_last
-                        err = self.get_error(u, i)
-                        sq_err = err**2
-                        self.update(u, i, feature, err)
+                    err = self.get_error(u, i)
+                    sq_err = err**2
+                    self.update(u, i, feature, err)
+
                         
                 cost = self.compute_cost(u, i)
 
