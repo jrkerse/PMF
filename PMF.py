@@ -1,161 +1,139 @@
+#!/usr/bin/env python
+
 from __future__ import division
 
 import numpy as np
 from scipy import sparse
 import sys
 
+np.seterr(all='raise')
 
 class PMF:
+    '''
+    Notation:
+    ------------
+        * f number of latent features
+        * m users
+        * n items
+        * r[u,i] indicates the preference for user u of item i
+        * r_hat[u,i]  indicates the predicted preference for user
+            u of item i
+        * K indicates {(u,i) | r[u,i] is known}
+        * b_u is user bias
+        * b_i is item bias
+        * q is a low-rank item matrix with f latent features
+        * p is a low-rank user matrix with f latent features
+        * min_iter is the min number of iterations for descent
+        * max_iter is the max number of iterations for descent
+        * min_improvement is the minimum improvement needed to continue
+            training the current feature
+    Goal:
+    ------------
+    We're going to use previously observed ratings to fit 
+    a rating estimator model.
+    '''
 
-    k = 25            # used for pseudo averages
-    K = 0.015         # regularization parameter
-    min_iter = 100    # minimum number of iterations
-    min_imp = 1e-4    # improvement threshold
+    def __init__(self, file_path, f, gamma=0.005, lambda_=0.02, min_iter = 1, max_iter=1000, 
+                 min_improvement=1e-4, **kwargs):
+        self.R_sparse = self._load_data(file_path)
+        self.R = self.R_sparse.todense()
+        self.f = f
+        self.gamma = gamma
+        self.lambda_ = lambda_
+        self.K_users, self.K_items = self.R_sparse.nonzero()
+
+        # self.n, self.m depend on R_sparse user, item vectors starting at 0
+        self.n = max(self.R_sparse.nonzero()[0]) + 1
+        self.m = max(self.R_sparse.nonzero()[1]) + 1
+
+        if hasattr(self, 'p'):
+            self.p = p
+        else:
+            self.p = np.ones((self.f, self.n)) * np.random.uniform(-0.01, 0.01, size=self.f*self.n).reshape(self.f,self.n)
+        if hasattr(self, 'q'):
+            self.q = q
+        else:
+            self.q = np.ones((self.f, self.m)) * np.random.uniform(-0.01, 0.01, size=self.m*self.f).reshape(self.f,self.m)
+
+        self.min_iter = min_iter
+        self.max_iter = max_iter
+        self.min_improvement = min_improvement
+
+        self.get_baseline()
 
 
-    def __init__(self, file_path, rank=40, init=0.1):
-        
-        self.rank=rank
-        
-        self.sparse_matrix = self._load_data(file_path)
-        matrix = self.sparse_matrix.todense()
-        
-        self.mu, user_bias, item_bias = self.baseline(matrix)
-        self.user_matrix = self._create_matrix(user_bias, rank, init)
-        self.item_matrix = self._create_matrix(item_bias, rank, init)
-        
-#         print 'user: {userbias}'.format(userbias=user_bias.shape)
-#         print 'item: {itembias}'.format(itembias=item_bias.shape)
-        
-        self.sparse_matrix = self._load_data(file_path)
-        users, items = self.sparse_matrix.nonzero()
-        self.user_pseudo_rating = dict.fromkeys(users)
-        self.item_pseudo_rating = dict.fromkeys(items)
-        self._compute_pseudo_averages()
+    def get_rating(self, u, i):
+        return self.R[u,i]
 
 
-    def baseline(self, matrix):
-        '''
-        Returns the global average rating, user bias, and item bias.
-        '''
-        mu = self._get_mu(matrix)
-        user_bias = mu - [self._get_mu(matrix[i,:]) for i in xrange((matrix.shape[0]))]
-        item_bias = mu - [self._get_mu(matrix[:,i]) for i in xrange((matrix.shape[1]))]
-        return mu, user_bias, item_bias
+    def predict_rhat(self, u, i):
+        r_hat = self.mu + self.b_i[i] + self.b_u[u] + np.dot(self.q.T[i,:], self.p[:,u])
+        if r_hat > 5:
+            return 5
+        elif r_hat < 1:
+            return 1
+        else:
+            return r_hat
 
 
     def _get_mu(self, x):
-        return np.nansum(x) / np.count_nonzero(~np.isnan(x))
+        return np.nansum(x) / np.count_nonzero(~np.isnan(x)) or self._get_mu(self.R)
 
 
-    def _create_matrix(self, bias, rank, init):
-        return np.ones((rank, bias.shape[0])) * init
-
-
-    def _get_user_rating(self, user_id):
-        user_reviews = self.sparse_matrix[user_id]
-        user_reviews = user_reviews.toarray().ravel()
-        user_rated_items, = np.where(user_reviews > 0)
-        user_ratings = user_reviews[user_rated_items]
-        return user_ratings
-
-
-    def _get_item_rating(self, item_id):
-        item_reviews = self.sparse_matrix[:, item_id]
-        item_reviews = item_reviews.toarray().ravel()
-        item_rated_users = np.where(item_reviews > 0)
-        item_ratings = item_reviews[item_rated_users]
-        return item_ratings
-
-
-    def _calculate_pseudo_average_user(self, user_id, k=k):
-        user_ratings = self._get_user_rating(user_id)
-        user_adj = (self.mu * k + np.sum(user_ratings))
-        norm_factor = (k + np.size(user_ratings))
-        return user_adj / norm_factor
-
-
-    def _calculate_pseudo_average_item(self, item_id, k=k):
-        item_ratings = self._get_item_rating(item_id)
-        item_adj = (self.mu * k + np.sum(item_ratings))
-        norm_factor = (k + np.size(item_ratings))
-        return item_adj / norm_factor
-
-
-    def _user_bias(self, user_id):
-        return self.user_pseudo_rating[user_id] - self.mu
-
-
-    def _item_bias(self, item_id):
-        return self.item_pseudo_rating[item_id] - self.mu
-
-
-    def _compute_pseudo_averages(self):
-        for user in self.user_pseudo_rating.keys():
-            self.user_pseudo_rating[user] = self._calculate_pseudo_average_user(user)
-        for item in self.item_pseudo_rating.keys():
-            self.item_pseudo_rating[item] = self._calculate_pseudo_average_item(item)
+    def get_baseline(self):
+        self.mu = self._get_mu(self.R)
+        self.b_u = self.mu - [self._get_mu(self.R[u,:]) for u in xrange(self.n)]
+        self.b_i = self.mu - [self._get_mu(self.R[:,i]) for i in xrange(self.m)]
         return None
-            
-
-    def get_rating(self, user_id, item_id):
-        return self.sparse_matrix[user_id, item_id]
 
 
-    def predict(self, user_id, item_id):
-        try:
-            return np.dot(self.item_matrix[:, item_id], self.user_matrix[:, user_id])
-        except:
-            print('user: {userid}, item: {itemid}'.format(userid=user_id, itemid=item_id))
-            return np.dot(self.item_matrix[:, item_id], self.user_matrix[:, user_id])
-            
-            
-    def calc_error(self, user_id, item_id):
-        r_ij = self.get_rating(user_id, item_id)
-        mu = self.mu
-        user_bias = self._user_bias(user_id)
-        item_bias = self._item_bias(item_id)
-        r_hat = self.predict(user_id, item_id)
-        return (r_ij - mu - user_bias - item_bias - r_hat)
+    def update(self, u, i, f,  err):
+        self.b_u[u] = self.b_u[u] + self.gamma * (err - self.lambda_ * self.b_u[u])
+        self.b_i[i] = self.b_i[i] + self.gamma * (err - self.lambda_ * self.b_i[i])
+        self.q[f,i] = self.q[f,i] + self.gamma * (err * self.p[f,u] - self.lambda_ * self.q[f,i])
+        self.p[f,u] = self.p[f,u] + self.gamma * (err * self.q[f,i] - self.lambda_ * self.p[f,u])
+        return None
+    
+
+    def compute_cost(self, u, i):
+        r = self.get_rating(u, i)
+        r_hat_desc = self.mu - self.b_i[i] - self.b_u[u] - np.dot(self.q.T[i,:], self.p[:,u])
+        cost = (r - r_hat_desc)**2 + self.lambda_ * \
+               (self.b_i[i]**2 + self.b_u[u]**2 + np.linalg.norm(self.q[:,i])**2 + \
+                                           np.linalg.norm(self.p[:,u])**2)
+        return cost
 
 
-    def train(self, user_id, item_id, feature_id, alpha=0.005, K=K):
-        '''
-        '''
-        err = self.calc_error(user_id, item_id)
-
-        user_feature_vector = self.user_matrix[feature_id]
-        item_feature_vector = self.item_matrix[feature_id]
-
-        user_feature_value = user_feature_vector[user_id]
-        item_feature_value = item_feature_vector[item_id]
-
-        user_feature_vector[user_id] += alpha * (err * item_feature_value - K * user_feature_value)
-        item_feature_vector[item_id] += alpha * (err * user_feature_value - K * item_feature_value)
-
-        return err ** 2
+    def get_error(self, u, i):
+        r = self.get_rating(u, i)
+        r_hat = self.predict_rhat(u, i)
+        err = r - r_hat
+        return err
 
 
-    def calculate_features(self):
-        mse = 0
-        last_mse = 0
-        n_ratings = np.count_nonzero(self.sparse_matrix.toarray().ravel())
-        users, items = self.sparse_matrix.nonzero()
-        for feature in xrange(self.rank):
-            j = 0
-            while (j < self.min_iter) or (mse < last_mse - self.min_imp):
-                squared_error = 0
-                last_mse = mse
+    def train(self):
+        cost = 2.0
+        n_ratings = len(self.K_items)
+        self.sse = 0
 
-                for user_id, item_id in zip(users, items):
-                    squared_error += self.train(user_id, item_id, feature)
+        for feature in xrange(self.f):
+            print('--- Calculating Feature: {feat} ---'.format(feat=feature + 1))
 
-                mse = (squared_error / n_ratings)
-                print('MSE = {mse}'.format(mse=str(mse)))
-                j += 1
-                sys.stdout.flush()
-            print('Feature = {feature_id}'.format(str(feature)))
-        print('Converged')
+
+            for n in xrange(self.max_iter):
+                cost_last = cost
+
+                for u, i in zip(self.K_users, self.K_items): 
+                    err = self.get_error(u, i)
+                    self.update(u, i, feature, err)
+                    self.sse += err**2
+                        
+                cost = self.compute_cost(u, i)
+
+                if (n >= self.min_iter and cost > cost_last - self.min_improvement):
+                    break
+
+        self.rmse = np.sqrt(self.sse / n_ratings)
 
 
     @staticmethod
@@ -175,7 +153,6 @@ class PMF:
         return sparse_matrix
 
 
-    if __name__ == '__main__':
-        # TODO:
-        #    * use movielens 100k database to run a sample test
-        pass
+if __name__ == '__main__':
+    test = PMF('./data/ml-100k/u1.base', 2)
+    test.train()
