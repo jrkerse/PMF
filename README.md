@@ -8,4 +8,4 @@ Ref.
 - Matrix Factorization Techniques for Recommender Systems; Yehuda Koren, Robert Bell, and Chris Volinsky
 - Netflix Update: Try This at Home; Simon Funk
 - Probabilistic Matrix Factorization; Ruslan Salakhutdinov and Andriy Mnih
-- Bayesian Probabilistic Matrix Factorization using Marko Chain Monte Carlo; Ruslan Salakhutdinov and Andriy Mnih
+- Bayesian Probabilistic Matrix Factorization using Markov Chain Monte Carlo; Ruslan Salakhutdinov and Andriy Mnih
