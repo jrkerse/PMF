@@ -4,8 +4,8 @@ Decompose a (sparse) user-item matrix to lower-rank matrices with f latent featu
 Model trained with stochastic gradient descent. Alternating least squares method pending.
 
 Ref.
-    - Recommender Systems Handbook (Ch.5); Yehuda Koren and Robert Bell
-    - Matrix Factorization Techniques for Recommender Systems; Yehuda Koren, Robert Bell, and Chris Volinsky
-    - Netflix Update: Try This at Home; Simon Funk
-    - Probabilistic Matrix Factorization; Ruslan Salakhutdinov and Andriy Mnih
-    - Bayesian Probabilistic Matrix Factorization using Marko Chain Monte Carlo; Ruslan Salakhutdinov and Andriy Mnih
+- Recommender Systems Handbook (Ch.5); Yehuda Koren and Robert Bell
+- Matrix Factorization Techniques for Recommender Systems; Yehuda Koren, Robert Bell, and Chris Volinsky
+- Netflix Update: Try This at Home; Simon Funk
+- Probabilistic Matrix Factorization; Ruslan Salakhutdinov and Andriy Mnih
+- Bayesian Probabilistic Matrix Factorization using Marko Chain Monte Carlo; Ruslan Salakhutdinov and Andriy Mnih
