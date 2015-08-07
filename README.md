@@ -1,5 +1,5 @@
 # Probabilistic Matrix Factorization
-Decompose a (sparse) user-item matrix to lower-rank matrices with *f* latent features. Includes naive user and item bias and regularization to limit overfitting. Constants untuned. Assumes a rating values of 1-5.
+Decompose a (sparse) user-item matrix to lower-rank matrices with *f* latent features. Includes naive user and item bias and regularization to limit overfitting. Constants untuned. Assumes a rating value between 1-5.
 
 Model trained with stochastic gradient descent. Alternating least squares method pending.
 
