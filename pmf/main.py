@@ -119,7 +119,6 @@ class PMF:
         for feature in xrange(self.f):
             print('--- Calculating Feature: {feat} ---'.format(feat=feature + 1))
 
-
             for n in xrange(self.max_iter):
                 cost_last = cost
 
