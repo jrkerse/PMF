@@ -30,7 +30,7 @@ class PMF:
     Goal:
     ------------
     We're going to use previously observed ratings to fit 
-    a rating estimator model.
+    a rating estimator.
     '''
 
     def __init__(self, file_path, f, gamma=0.005, lambda_=0.02, min_iter = 1, max_iter=1000, 
