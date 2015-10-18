@@ -47,13 +47,21 @@ class PMF:
         self.m = max(self.R_sparse.nonzero()[1]) + 1
 
         if hasattr(self, 'p'):
-            self.p = p
+            try:
+                self.p = p
+            except:
+                print "Error with input paramater `p`."
         else:
-            self.p = np.ones((self.f, self.n)) * np.random.uniform(-0.01, 0.01, size=self.f*self.n).reshape(self.f,self.n)
+            self.p = np.ones((self.f, self.n)) * np.random.uniform(-0.01, 0.01,
+                                                     size=self.f*self.n).reshape(self.f,self.n)
         if hasattr(self, 'q'):
-            self.q = q
+            try:
+                self.q = q
+            except:
+                print "Error with input paramater `q`."
         else:
-            self.q = np.ones((self.f, self.m)) * np.random.uniform(-0.01, 0.01, size=self.m*self.f).reshape(self.f,self.m)
+            self.q = np.ones((self.f, self.m)) * np.random.uniform(-0.01, 0.01,
+                                                     size=self.m*self.f).reshape(self.f,self.m)
 
         self.min_iter = min_iter
         self.max_iter = max_iter
@@ -67,7 +75,8 @@ class PMF:
 
 
     def predict_rhat(self, u, i):
-        r_hat = self.mu + self.b_i[i] + self.b_u[u] + np.dot(self.q.T[i,:], self.p[:,u])
+        r_hat = self.mu + self.b_i[i] + self.b_u[u] +
+                     np.dot(self.q.T[i,:], self.p[:,u])
         if r_hat > 5:
             return 5
         elif r_hat < 1:
