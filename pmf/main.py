@@ -33,7 +33,7 @@ class PMF:
     '''
 
     def __init__(self, file_path, f, gamma=0.005, lambda_=0.02, min_iter = 1, max_iter=1000, 
-                 min_improvement=1e-4, **kwargs):
+                 min_improvement=1e-4, p=None, q=None):
         self.R_sparse = self._load_data(file_path)
         self.R = self.R_sparse.todense()
         self.f = f
@@ -48,18 +48,12 @@ class PMF:
         # load low-rank matrices `p` (item) or `q` (user) matrix
         #   otherwise, randomly initalize
         if hasattr(self, 'p'):
-            try:
-                self.p = p
-            except:
-                print "Error with input paramater `p`."
+            self.p = p
         else:
             self.p = np.ones((self.f, self.n)) * np.random.uniform(-0.01, 0.01,
                                                      size=self.f*self.n).reshape(self.f,self.n)
         if hasattr(self, 'q'):
-            try:
-                self.q = q
-            except:
-                print "Error with input paramater `q`."
+            self.q = q
         else:
             self.q = np.ones((self.f, self.m)) * np.random.uniform(-0.01, 0.01,
                                                      size=self.m*self.f).reshape(self.f,self.m)
@@ -77,7 +71,7 @@ class PMF:
 
 
     def predict_rhat(self, u, i):
-        r_hat = self.mu + self.b_i[i] + self.b_u[u] +
+        r_hat = self.mu + self.b_i[i] + self.b_u[u] + \
                      np.dot(self.q.T[i,:], self.p[:,u])
         if r_hat > 5:
             return 5
