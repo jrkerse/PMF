@@ -29,8 +29,7 @@ class PMF:
             training the current feature
     Goal:
     ------------
-    We're going to use previously observed ratings to fit 
-    a rating estimator.
+    Use previously observed ratings to fit rating estimator.
     '''
 
     def __init__(self, file_path, f, gamma=0.005, lambda_=0.02, min_iter = 1, max_iter=1000, 
@@ -46,6 +45,8 @@ class PMF:
         self.n = max(self.R_sparse.nonzero()[0]) + 1
         self.m = max(self.R_sparse.nonzero()[1]) + 1
 
+        # load low-rank matrices `p` (item) or `q` (user) matrix
+        #   otherwise, randomly initalize
         if hasattr(self, 'p'):
             try:
                 self.p = p
@@ -67,6 +68,7 @@ class PMF:
         self.max_iter = max_iter
         self.min_improvement = min_improvement
 
+        # initialize average rating, and initial user/item biases
         self.get_baseline()
 
 
